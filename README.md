@@ -266,3 +266,5 @@ Sistema desenvolvido para fins de auditoria e rastreabilidade de publicações.
 ```
 
 **Desenvolvido com ❤️ usando Python**
+#   a u d i t o r i a _ p u b l i c a c a o  
+ 
