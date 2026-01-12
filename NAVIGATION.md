@@ -1,6 +1,6 @@
 # 🗺️ Guia de Navegação - Sistema de Auditoria de Publicação
 
-## 🎯 Por Onde Começar?
+## 🎯 Por Onde Começar
 
 Escolha seu perfil:
 
