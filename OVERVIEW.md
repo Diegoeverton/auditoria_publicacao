@@ -1,6 +1,6 @@
 # 📄 Sistema de Auditoria de Publicação de Fascículos
 
-## 🎯 Visão Geral
+## 🎯 Visão Geral....
 
 Sistema completo de controle e auditoria para publicação de fascículos em PDF com rastreabilidade **end-to-end** usando conceitos de **blockchain**.
 
