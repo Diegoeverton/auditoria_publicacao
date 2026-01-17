@@ -1,10 +1,15 @@
 """
 Sistema Principal - Geração de Hash para Fascículos
-Este script gera hashes criptografados para fascículos e registra na blockchain
+Este script gera hashes criptografados para fascículos e registra na blockchain e MySQL
 """
 import sys
 import argparse
 from pathlib import Path
+import json
+from dotenv import load_dotenv
+
+# Carrega variáveis de ambiente
+load_dotenv()
 
 # Adiciona o diretório src ao path
 sys.path.insert(0, str(Path(__file__).parent / 'src'))
@@ -12,13 +17,19 @@ sys.path.insert(0, str(Path(__file__).parent / 'src'))
 from hash_generator import HashGenerator
 from crypto_manager import CryptoManager
 from blockchain_audit import BlockchainAudit, BlockType
+from database import DatabaseManager
+from logger import get_logger
+from validator import Validator, validar_ou_erro
 from config import ENCRYPTION_KEY_PATH, BLOCKCHAIN_PATH
-import json
+
+# Configurar logger
+logger = get_logger(__name__)
 
 
 def main():
+    """Função principal"""
     parser = argparse.ArgumentParser(
-        description='Gera hash criptografado para um fascículo e registra na blockchain'
+        description='Gera hash criptografado para um fascículo e registra na blockchain e MySQL'
     )
     parser.add_argument('--edicao', required=True, help='Nome ou número da edição')
     parser.add_argument('--fasciculo', required=True, help='Nome ou número do fascículo')
@@ -27,102 +38,240 @@ def main():
     
     args = parser.parse_args()
     
-    # Valida arquivo PDF
-    pdf_path = Path(args.pdf)
-    if not pdf_path.exists():
-        print(f"✗ Erro: Arquivo PDF não encontrado: {pdf_path}")
-        return 1
+    logger.info("=" * 70)
+    logger.info("SISTEMA DE GERAÇÃO DE HASH PARA FASCÍCULOS")
+    logger.info("=" * 70)
     
-    if pdf_path.suffix.lower() != '.pdf':
-        print(f"✗ Erro: O arquivo deve ser um PDF")
-        return 1
-    
-    # Parse metadata
     try:
-        metadata = json.loads(args.metadata)
-    except json.JSONDecodeError:
-        print(f"✗ Erro: Metadados inválidos. Use formato JSON válido")
+        # ===== VALIDAÇÕES =====
+        logger.info("Validando entradas...")
+        
+        # Validar nome da edição
+        try:
+            validar_ou_erro(Validator.validar_nome, args.edicao, "Edição")
+        except ValueError as e:
+            logger.error(f"Validação falhou: {e}")
+            print(f"\n✗ Erro: {e}")
+            return 1
+        
+        # Validar nome do fascículo
+        try:
+            validar_ou_erro(Validator.validar_nome, args.fasciculo, "Fascículo")
+        except ValueError as e:
+            logger.error(f"Validação falhou: {e}")
+            print(f"\n✗ Erro: {e}")
+            return 1
+        
+        # Validar PDF
+        pdf_path = Path(args.pdf)
+        valido, erro = Validator.validar_pdf(str(pdf_path))
+        if not valido:
+            logger.error(f"Validação de PDF falhou: {erro}")
+            print(f"\n✗ Erro: {erro}")
+            return 1
+        
+        # Parse metadata
+        try:
+            metadata = json.loads(args.metadata)
+        except json.JSONDecodeError as e:
+            logger.error(f"Metadados inválidos: {e}")
+            print(f"\n✗ Erro: Metadados inválidos. Use formato JSON válido")
+            return 1
+        
+        logger.info("✓ Validações concluídas")
+        
+        # ===== EXIBIR INFORMAÇÕES =====
+        print(f"\nEdição: {args.edicao}")
+        print(f"Fascículo: {args.fasciculo}")
+        print(f"PDF: {pdf_path}")
+        print(f"Tamanho: {pdf_path.stat().st_size / 1024:.2f} KB")
+        
+        logger.info(f"Edição: {args.edicao}, Fascículo: {args.fasciculo}, PDF: {pdf_path}")
+        
+        # ===== INICIALIZAR COMPONENTES =====
+        print("\n[1/6] Inicializando componentes...")
+        logger.info("Inicializando componentes...")
+        
+        try:
+            hash_gen = HashGenerator()
+            crypto = CryptoManager(ENCRYPTION_KEY_PATH)
+            blockchain = BlockchainAudit(BLOCKCHAIN_PATH)
+            db = DatabaseManager()
+            
+            logger.info("✓ Componentes inicializados")
+        except Exception as e:
+            logger.exception("Erro ao inicializar componentes")
+            print(f"\n✗ Erro ao inicializar componentes: {e}")
+            return 1
+        
+        # ===== GERAR HASH =====
+        print("[2/6] Gerando hash do fascículo...")
+        logger.info("Gerando hash do fascículo...")
+        
+        try:
+            hash_info = hash_gen.generate_fasciculo_hash(
+                pdf_path=pdf_path,
+                edicao=args.edicao,
+                fasciculo=args.fasciculo,
+                metadata=metadata
+            )
+            
+            print(f"  ✓ Hash ID: {hash_info['hash_id']}")
+            print(f"  ✓ Hash do Fascículo: {hash_info['fasciculo_hash'][:32]}...")
+            
+            logger.info(f"Hash gerado - ID: {hash_info['hash_id']}, Hash: {hash_info['fasciculo_hash'][:16]}...")
+        except Exception as e:
+            logger.exception("Erro ao gerar hash")
+            print(f"\n✗ Erro ao gerar hash: {e}")
+            return 1
+        
+        # ===== REGISTRAR NA BLOCKCHAIN =====
+        print("[3/6] Registrando geração na blockchain...")
+        logger.info("Registrando na blockchain...")
+        
+        try:
+            blockchain.add_block(
+                data={
+                    'hash_id': hash_info['hash_id'],
+                    'edicao': args.edicao,
+                    'fasciculo': args.fasciculo,
+                    'fasciculo_hash': hash_info['fasciculo_hash'],
+                    'pdf_path': str(pdf_path),
+                    'pdf_size': hash_info['pdf_size'],
+                    'action': 'Hash gerado para fascículo'
+                },
+                block_type=BlockType.HASH_GENERATED
+            )
+            print(f"  ✓ Bloco adicionado à blockchain")
+            logger.info("✓ Bloco adicionado à blockchain")
+        except Exception as e:
+            logger.exception("Erro ao adicionar bloco na blockchain")
+            print(f"\n✗ Erro ao registrar na blockchain: {e}")
+            return 1
+        
+        # ===== SALVAR NO MYSQL =====
+        print("[4/6] Salvando no banco de dados MySQL...")
+        logger.info("Salvando no MySQL...")
+        
+        try:
+            if db.connect():
+                # Inserir fascículo
+                db.inserir_fasciculo(hash_info)
+                
+                # Inserir log de geração
+                db.inserir_log_evento(
+                    hash_id=hash_info['hash_id'],
+                    evento_tipo='HASH_GENERATED',
+                    dados_adicionais={
+                        'edicao': args.edicao,
+                        'fasciculo': args.fasciculo,
+                        'pdf_size': hash_info['pdf_size']
+                    }
+                )
+                
+                db.disconnect()
+                print(f"  ✓ Dados salvos no MySQL")
+                logger.info("✓ Dados salvos no MySQL")
+            else:
+                logger.warning("Não foi possível conectar ao MySQL - continuando sem banco")
+                print(f"  ⚠ Aviso: Não foi possível salvar no MySQL (continuando)")
+        except Exception as e:
+            logger.exception("Erro ao salvar no MySQL")
+            print(f"  ⚠ Aviso: Erro ao salvar no MySQL: {e} (continuando)")
+        
+        # ===== CRIPTOGRAFAR =====
+        print("[5/6] Criptografando informações sensíveis...")
+        logger.info("Criptografando informações...")
+        
+        try:
+            encrypted_info = crypto.encrypt_hash(hash_info)
+            print(f"  ✓ Dados criptografados")
+            logger.info("✓ Dados criptografados")
+        except Exception as e:
+            logger.exception("Erro ao criptografar")
+            print(f"\n✗ Erro ao criptografar: {e}")
+            return 1
+        
+        # Registrar criptografia na blockchain
+        try:
+            blockchain.add_block(
+                data={
+                    'hash_id': hash_info['hash_id'],
+                    'edicao': args.edicao,
+                    'fasciculo': args.fasciculo,
+                    'encrypted_data_length': len(encrypted_info['encrypted_data']),
+                    'action': 'Hash criptografado'
+                },
+                block_type=BlockType.HASH_ENCRYPTED
+            )
+            logger.info("✓ Criptografia registrada na blockchain")
+        except Exception as e:
+            logger.exception("Erro ao registrar criptografia na blockchain")
+            print(f"\n✗ Erro ao registrar criptografia: {e}")
+            return 1
+        
+        # Registrar criptografia no MySQL
+        try:
+            if db.connect():
+                db.inserir_log_evento(
+                    hash_id=hash_info['hash_id'],
+                    evento_tipo='HASH_ENCRYPTED',
+                    dados_adicionais={
+                        'encrypted_data_length': len(encrypted_info['encrypted_data'])
+                    }
+                )
+                db.disconnect()
+                logger.info("✓ Criptografia registrada no MySQL")
+        except Exception as e:
+            logger.warning(f"Erro ao registrar criptografia no MySQL: {e}")
+        
+        # ===== SALVAR ARQUIVO =====
+        print("[6/6] Salvando arquivo de hash...")
+        logger.info("Salvando arquivo de hash...")
+        
+        try:
+            output_file = Path('data') / f"hash_{hash_info['hash_id']}.json"
+            output_file.parent.mkdir(exist_ok=True)
+            
+            with open(output_file, 'w', encoding='utf-8') as f:
+                json.dump(encrypted_info, f, indent=2, ensure_ascii=False)
+            
+            print(f"  ✓ Arquivo salvo: {output_file}")
+            logger.info(f"✓ Arquivo salvo: {output_file}")
+        except Exception as e:
+            logger.exception("Erro ao salvar arquivo")
+            print(f"\n✗ Erro ao salvar arquivo: {e}")
+            return 1
+        
+        # ===== SUCESSO =====
+        print("\n" + "=" * 70)
+        print("✓ HASH GERADO E REGISTRADO COM SUCESSO!")
+        print("=" * 70)
+        print(f"\nHash ID: {hash_info['hash_id']}")
+        print(f"Arquivo de hash: {output_file}")
+        print(f"\nPara enviar este fascículo, use:")
+        print(f"  python send_system.py --hash-id {hash_info['hash_id']} --destinatario email@exemplo.com")
+        print(f"\nPara consultar a auditoria, use:")
+        print(f"  python audit_query.py --hash-id {hash_info['hash_id']}")
+        print(f"  python consultar_db.py --hash-id {hash_info['hash_id']}")
+        
+        logger.info("=" * 70)
+        logger.info("HASH GERADO E REGISTRADO COM SUCESSO!")
+        logger.info(f"Hash ID: {hash_info['hash_id']}")
+        logger.info("=" * 70)
+        
+        return 0
+    
+    except KeyboardInterrupt:
+        logger.warning("Operação cancelada pelo usuário")
+        print("\n\n⚠ Operação cancelada pelo usuário")
+        return 130
+    
+    except Exception as e:
+        logger.exception("Erro inesperado")
+        print(f"\n✗ Erro inesperado: {e}")
+        print(f"Verifique o arquivo de log para mais detalhes: logs/auditoria_*.log")
         return 1
-    
-    print("=" * 70)
-    print("SISTEMA DE GERAÇÃO DE HASH PARA FASCÍCULOS")
-    print("=" * 70)
-    print(f"\nEdição: {args.edicao}")
-    print(f"Fascículo: {args.fasciculo}")
-    print(f"PDF: {pdf_path}")
-    print(f"Tamanho: {pdf_path.stat().st_size / 1024:.2f} KB")
-    
-    # Inicializa componentes
-    print("\n[1/5] Inicializando componentes...")
-    hash_gen = HashGenerator()
-    crypto = CryptoManager(ENCRYPTION_KEY_PATH)
-    blockchain = BlockchainAudit(BLOCKCHAIN_PATH)
-    
-    # Gera hash do fascículo
-    print("[2/5] Gerando hash do fascículo...")
-    hash_info = hash_gen.generate_fasciculo_hash(
-        pdf_path=pdf_path,
-        edicao=args.edicao,
-        fasciculo=args.fasciculo,
-        metadata=metadata
-    )
-    
-    print(f"  ✓ Hash ID: {hash_info['hash_id']}")
-    print(f"  ✓ Hash do Fascículo: {hash_info['fasciculo_hash'][:32]}...")
-    
-    # Registra geração na blockchain
-    print("[3/5] Registrando geração na blockchain...")
-    blockchain.add_block(
-        data={
-            'hash_id': hash_info['hash_id'],
-            'edicao': args.edicao,
-            'fasciculo': args.fasciculo,
-            'fasciculo_hash': hash_info['fasciculo_hash'],
-            'pdf_path': str(pdf_path),
-            'pdf_size': hash_info['pdf_size'],
-            'action': 'Hash gerado para fascículo'
-        },
-        block_type=BlockType.HASH_GENERATED
-    )
-    print(f"  ✓ Bloco adicionado à blockchain")
-    
-    # Criptografa informações
-    print("[4/5] Criptografando informações sensíveis...")
-    encrypted_info = crypto.encrypt_hash(hash_info)
-    print(f"  ✓ Dados criptografados")
-    
-    # Registra criptografia na blockchain
-    print("[5/5] Registrando criptografia na blockchain...")
-    blockchain.add_block(
-        data={
-            'hash_id': hash_info['hash_id'],
-            'edicao': args.edicao,
-            'fasciculo': args.fasciculo,
-            'encrypted_data_length': len(encrypted_info['encrypted_data']),
-            'action': 'Hash criptografado'
-        },
-        block_type=BlockType.HASH_ENCRYPTED
-    )
-    print(f"  ✓ Bloco de criptografia adicionado")
-    
-    # Salva informações criptografadas em arquivo
-    output_file = Path('data') / f"hash_{hash_info['hash_id']}.json"
-    output_file.parent.mkdir(exist_ok=True)
-    
-    with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump(encrypted_info, f, indent=2, ensure_ascii=False)
-    
-    print("\n" + "=" * 70)
-    print("✓ HASH GERADO E REGISTRADO COM SUCESSO!")
-    print("=" * 70)
-    print(f"\nHash ID: {hash_info['hash_id']}")
-    print(f"Arquivo de hash: {output_file}")
-    print(f"\nPara enviar este fascículo, use:")
-    print(f"  python send_system.py --hash-id {hash_info['hash_id']} --destinatario email@exemplo.com")
-    print(f"\nPara consultar a auditoria, use:")
-    print(f"  python audit_query.py --hash-id {hash_info['hash_id']}")
-    
-    return 0
 
 
 if __name__ == "__main__":

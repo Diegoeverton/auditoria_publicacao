@@ -374,3 +374,16 @@ python audit_query.py --estatisticas
 ---
 
 **💡 Dica:** Salve este arquivo como referência rápida!
+
+##### Comandos Úteis de Consulta 
+# Ver estatísticas do banco
+python consultar_db.py --estatisticas
+
+# Ver últimos 10 fascículos
+python consultar_db.py --ultimos 10
+
+# Consultar fascículo específico
+python consultar_db.py --hash-id <hash-id>
+
+# Ver todos os fascículos de uma edição
+python consultar_db.py --edicao "Edição 001"
