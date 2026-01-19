@@ -84,7 +84,7 @@ def main():
             validar_ou_erro(Validator.validar_hash_id, args.hash_id)
         except ValueError as e:
             logger.error(f"Validação falhou: {e}")
-            print(f"\n✗ Erro: {e}")
+            print(f"\n[ERRO] Erro: {e}")
             return 1
         
         # Validar email do destinatário
@@ -92,10 +92,10 @@ def main():
             validar_ou_erro(Validator.validar_email, args.destinatario)
         except ValueError as e:
             logger.error(f"Validação falhou: {e}")
-            print(f"\n✗ Erro: {e}")
+            print(f"\n[ERRO] Erro: {e}")
             return 1
         
-        logger.info("✓ Validações concluídas")
+        logger.info("[OK] Validações concluídas")
         
         # ===== EXIBIR INFORMAÇÕES =====
         print("=" * 70)
@@ -111,7 +111,7 @@ def main():
         
         if not hash_file.exists():
             logger.error(f"Arquivo de hash não encontrado: {hash_file}")
-            print(f"\n✗ Erro: Arquivo de hash não encontrado: {hash_file}")
+            print(f"\n[ERRO] Erro: Arquivo de hash não encontrado: {hash_file}")
             print(f"  Certifique-se de que o hash foi gerado usando main.py")
             return 1
         
@@ -125,10 +125,10 @@ def main():
             email_sender = EmailSender(SMTP_CONFIG)
             db = DatabaseManager()
             
-            logger.info("✓ Componentes inicializados")
+            logger.info("[OK] Componentes inicializados")
         except Exception as e:
             logger.exception("Erro ao inicializar componentes")
-            print(f"\n✗ Erro ao inicializar componentes: {e}")
+            print(f"\n[ERRO] Erro ao inicializar componentes: {e}")
             return 1
         
         # ===== CARREGAR HASH CRIPTOGRAFADO =====
@@ -139,13 +139,13 @@ def main():
             with open(hash_file, 'r', encoding='utf-8') as f:
                 encrypted_info = json.load(f)
             
-            print(f"  ✓ Edição: {encrypted_info['edicao']}")
-            print(f"  ✓ Fascículo: {encrypted_info['fasciculo']}")
+            print(f"  [OK] Edição: {encrypted_info['edicao']}")
+            print(f"  [OK] Fascículo: {encrypted_info['fasciculo']}")
             
             logger.info(f"Hash carregado - Edição: {encrypted_info['edicao']}, Fascículo: {encrypted_info['fasciculo']}")
         except Exception as e:
             logger.exception("Erro ao carregar hash")
-            print(f"\n✗ Erro ao carregar hash: {e}")
+            print(f"\n[ERRO] Erro ao carregar hash: {e}")
             return 1
         
         # ===== DESCRIPTOGRAFAR =====
@@ -154,12 +154,12 @@ def main():
         
         try:
             decrypted_info = crypto.decrypt_hash(encrypted_info)
-            print(f"  ✓ Hash descriptografado: {decrypted_info['fasciculo_hash'][:32]}...")
+            print(f"  [OK] Hash descriptografado: {decrypted_info['fasciculo_hash'][:32]}...")
             
             logger.info(f"Hash descriptografado: {decrypted_info['fasciculo_hash'][:16]}...")
         except Exception as e:
             logger.exception("Erro ao descriptografar")
-            print(f"\n✗ Erro ao descriptografar: {e}")
+            print(f"\n[ERRO] Erro ao descriptografar: {e}")
             return 1
         
         # ===== REGISTRAR DESCRIPTOGRAFIA =====
@@ -178,11 +178,11 @@ def main():
                 },
                 block_type=BlockType.HASH_DECRYPTED
             )
-            print(f"  ✓ Registrado na blockchain")
-            logger.info("✓ Descriptografia registrada na blockchain")
+            print(f"  [OK] Registrado na blockchain")
+            logger.info("[OK] Descriptografia registrada na blockchain")
         except Exception as e:
             logger.exception("Erro ao registrar descriptografia na blockchain")
-            print(f"\n✗ Erro ao registrar na blockchain: {e}")
+            print(f"\n[ERRO] Erro ao registrar na blockchain: {e}")
             return 1
         
         # MySQL
@@ -198,17 +198,17 @@ def main():
                     }
                 )
                 db.disconnect()
-                print(f"  ✓ Registrado no MySQL")
-                logger.info("✓ Descriptografia registrada no MySQL")
+                print(f"  [OK] Registrado no MySQL")
+                logger.info("[OK] Descriptografia registrada no MySQL")
         except Exception as e:
             logger.warning(f"Erro ao registrar descriptografia no MySQL: {e}")
-            print(f"  ⚠ Aviso: Erro ao registrar no MySQL (continuando)")
+            print(f"  [AVISO] Aviso: Erro ao registrar no MySQL (continuando)")
         
         # ===== VERIFICAR PDF =====
         pdf_path = Path(decrypted_info['pdf_path'])
         if not pdf_path.exists():
             logger.warning(f"PDF não encontrado: {pdf_path}")
-            print(f"\n⚠ Aviso: PDF não encontrado em {pdf_path}")
+            print(f"\n[AVISO] Aviso: PDF não encontrado em {pdf_path}")
             print(f"  O email será enviado sem anexo")
             pdf_path = None
         else:
@@ -216,13 +216,13 @@ def main():
             valido, erro = Validator.validar_pdf(str(pdf_path))
             if not valido:
                 logger.error(f"PDF inválido: {erro}")
-                print(f"\n✗ Erro: {erro}")
+                print(f"\n[ERRO] Erro: {erro}")
                 return 1
         
         # ===== VERIFICAR CONFIGURAÇÃO DE EMAIL =====
         if not SMTP_CONFIG['user'] or not SMTP_CONFIG['password']:
             logger.error("Configurações de email não definidas")
-            print("\n✗ Erro: Configurações de email não definidas")
+            print("\n[ERRO] Erro: Configurações de email não definidas")
             print("  Configure as credenciais SMTP no arquivo .env")
             print("\nVeja o guia: CONFIGURAR_GMAIL.md")
             return 1
@@ -242,16 +242,16 @@ def main():
             )
             
             if send_result['success']:
-                print(f"  ✓ Email enviado com sucesso!")
-                logger.info(f"✓ Email enviado para {args.destinatario}")
+                print(f"  [OK] Email enviado com sucesso!")
+                logger.info(f"[OK] Email enviado para {args.destinatario}")
             else:
                 logger.error(f"Erro ao enviar email: {send_result.get('error')}")
-                print(f"  ✗ Erro ao enviar email: {send_result.get('error')}")
+                print(f"  [ERRO] Erro ao enviar email: {send_result.get('error')}")
                 return 1
         
         except Exception as e:
             logger.exception("Erro ao enviar email após 3 tentativas")
-            print(f"\n✗ Erro ao enviar email após 3 tentativas: {e}")
+            print(f"\n[ERRO] Erro ao enviar email após 3 tentativas: {e}")
             print(f"  Verifique:")
             print(f"  1. Configurações de email no .env")
             print(f"  2. Conexão com internet")
@@ -276,11 +276,11 @@ def main():
                 },
                 block_type=BlockType.EMAIL_SENT
             )
-            print(f"  ✓ Registrado na blockchain")
-            logger.info("✓ Envio registrado na blockchain")
+            print(f"  [OK] Registrado na blockchain")
+            logger.info("[OK] Envio registrado na blockchain")
         except Exception as e:
             logger.exception("Erro ao registrar envio na blockchain")
-            print(f"\n✗ Erro ao registrar na blockchain: {e}")
+            print(f"\n[ERRO] Erro ao registrar na blockchain: {e}")
             return 1
         
         # MySQL
@@ -298,15 +298,15 @@ def main():
                     }
                 )
                 db.disconnect()
-                print(f"  ✓ Registrado no MySQL")
-                logger.info("✓ Envio registrado no MySQL")
+                print(f"  [OK] Registrado no MySQL")
+                logger.info("[OK] Envio registrado no MySQL")
         except Exception as e:
             logger.warning(f"Erro ao registrar envio no MySQL: {e}")
-            print(f"  ⚠ Aviso: Erro ao registrar no MySQL (continuando)")
+            print(f"  [AVISO] Aviso: Erro ao registrar no MySQL (continuando)")
         
         # ===== SUCESSO =====
         print("\n" + "=" * 70)
-        print("✓ FASCÍCULO ENVIADO E REGISTRADO COM SUCESSO!")
+        print("[OK] FASCÍCULO ENVIADO E REGISTRADO COM SUCESSO!")
         print("=" * 70)
         print(f"\nDestinatário: {args.destinatario}")
         print(f"Hash do Fascículo: {decrypted_info['fasciculo_hash']}")
@@ -323,12 +323,12 @@ def main():
     
     except KeyboardInterrupt:
         logger.warning("Operação cancelada pelo usuário")
-        print("\n\n⚠ Operação cancelada pelo usuário")
+        print("\n\n[AVISO] Operação cancelada pelo usuário")
         return 130
     
     except Exception as e:
         logger.exception("Erro inesperado")
-        print(f"\n✗ Erro inesperado: {e}")
+        print(f"\n[ERRO] Erro inesperado: {e}")
         print(f"Verifique o arquivo de log para mais detalhes: logs/auditoria_*.log")
         return 1
 

@@ -46,15 +46,15 @@ def main():
     
     print_step(1, 7, "Inicializando Hash Generator...")
     hash_gen = HashGenerator()
-    print("  ✓ Hash Generator inicializado")
+    print("  [OK] Hash Generator inicializado")
     
     print_step(2, 7, "Inicializando Crypto Manager...")
     crypto = CryptoManager(ENCRYPTION_KEY_PATH)
-    print("  ✓ Crypto Manager inicializado")
+    print("  [OK] Crypto Manager inicializado")
     
     print_step(3, 7, "Inicializando Blockchain...")
     blockchain = BlockchainAudit(BLOCKCHAIN_PATH)
-    print(f"  ✓ Blockchain inicializada com {len(blockchain.chain)} blocos")
+    print(f"  [OK] Blockchain inicializada com {len(blockchain.chain)} blocos")
     
     # Simula geração de hash para um fascículo
     print_header("GERAÇÃO DE HASH PARA FASCÍCULO")
@@ -76,11 +76,11 @@ def main():
             c.drawString(100, 710, "Fascículo: 01")
             c.drawString(100, 680, "Este é um PDF de demonstração para o sistema de auditoria.")
             c.save()
-            print("  ✓ PDF de demonstração criado")
+            print("  [OK] PDF de demonstração criado")
         except ImportError:
             # Se reportlab não estiver disponível, cria um arquivo vazio
             demo_pdf_path.write_bytes(b'%PDF-1.4\n%Demo PDF\n')
-            print("  ✓ PDF de demonstração criado (simplificado)")
+            print("  [OK] PDF de demonstração criado (simplificado)")
     
     print_step(4, 7, "Gerando hash do fascículo...")
     
@@ -97,7 +97,7 @@ def main():
             metadata={'demo': True, 'versao': '1.0'}
         )
     except Exception as e:
-        print(f"  ⚠ Aviso: {e}")
+        print(f"  [AVISO] Aviso: {e}")
         print("  Usando hash simulado para demonstração...")
         import hashlib
         import uuid
@@ -114,8 +114,8 @@ def main():
             'metadata': {'demo': True}
         }
     
-    print(f"  ✓ Hash ID: {hash_info['hash_id']}")
-    print(f"  ✓ Hash: {hash_info['fasciculo_hash'][:32]}...")
+    print(f"  [OK] Hash ID: {hash_info['hash_id']}")
+    print(f"  [OK] Hash: {hash_info['fasciculo_hash'][:32]}...")
     
     # Registra na blockchain
     print_step(5, 7, "Registrando na blockchain...")
@@ -130,14 +130,14 @@ def main():
         },
         block_type=BlockType.HASH_GENERATED
     )
-    print("  ✓ Bloco HASH_GENERATED adicionado")
+    print("  [OK] Bloco HASH_GENERATED adicionado")
     
     # Criptografa
     print_header("CRIPTOGRAFIA")
     
     print_step(6, 7, "Criptografando informações sensíveis...")
     encrypted_info = crypto.encrypt_hash(hash_info)
-    print(f"  ✓ Dados criptografados ({len(encrypted_info['encrypted_data'])} chars)")
+    print(f"  [OK] Dados criptografados ({len(encrypted_info['encrypted_data'])} chars)")
     
     # Registra criptografia
     blockchain.add_block(
@@ -149,14 +149,14 @@ def main():
         },
         block_type=BlockType.HASH_ENCRYPTED
     )
-    print("  ✓ Bloco HASH_ENCRYPTED adicionado")
+    print("  [OK] Bloco HASH_ENCRYPTED adicionado")
     
     # Descriptografa
     print_header("DESCRIPTOGRAFIA E ENVIO")
     
     print_step(7, 7, "Descriptografando informações...")
     decrypted_info = crypto.decrypt_hash(encrypted_info)
-    print(f"  ✓ Hash descriptografado: {decrypted_info['fasciculo_hash'][:32]}...")
+    print(f"  [OK] Hash descriptografado: {decrypted_info['fasciculo_hash'][:32]}...")
     
     # Registra descriptografia
     blockchain.add_block(
@@ -169,7 +169,7 @@ def main():
         },
         block_type=BlockType.HASH_DECRYPTED
     )
-    print("  ✓ Bloco HASH_DECRYPTED adicionado")
+    print("  [OK] Bloco HASH_DECRYPTED adicionado")
     
     # Simula envio
     print("\n  Simulando envio de email...")
@@ -184,8 +184,8 @@ def main():
         },
         block_type=BlockType.EMAIL_SENT
     )
-    print("  ✓ Bloco EMAIL_SENT adicionado")
-    print("  ✓ Email simulado enviado para: demo@exemplo.com")
+    print("  [OK] Bloco EMAIL_SENT adicionado")
+    print("  [OK] Email simulado enviado para: demo@exemplo.com")
     
     # Consulta auditoria
     print_header("CONSULTA DE AUDITORIA")
@@ -208,11 +208,11 @@ def main():
     is_valid = blockchain.verify_integrity()
     
     if is_valid:
-        print("  ✓ BLOCKCHAIN ÍNTEGRA")
-        print("  ✓ Todos os blocos estão válidos")
-        print("  ✓ A cadeia está intacta")
+        print("  [OK] BLOCKCHAIN ÍNTEGRA")
+        print("  [OK] Todos os blocos estão válidos")
+        print("  [OK] A cadeia está intacta")
     else:
-        print("  ✗ BLOCKCHAIN COMPROMETIDA")
+        print("  [ERRO] BLOCKCHAIN COMPROMETIDA")
     
     # Estatísticas
     print_header("ESTATÍSTICAS")
@@ -230,7 +230,7 @@ def main():
     # Resumo final
     print_header("DEMONSTRAÇÃO CONCLUÍDA")
     
-    print("✓ Sistema funcionando corretamente!")
+    print("[OK] Sistema funcionando corretamente!")
     print(f"\nHash ID gerado: {hash_info['hash_id']}")
     print(f"Total de blocos na blockchain: {len(blockchain.chain)}")
     print(f"Blockchain íntegra: {'Sim' if is_valid else 'Não'}")
@@ -250,6 +250,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n\nDemonstração interrompida pelo usuário.")
     except Exception as e:
-        print(f"\n✗ Erro durante demonstração: {e}")
+        print(f"\n[ERRO] Erro durante demonstração: {e}")
         import traceback
         traceback.print_exc()

@@ -29,7 +29,7 @@ def exemplo_completo():
     blockchain = BlockchainAudit(BLOCKCHAIN_PATH)
     email_sender = EmailSender(SMTP_CONFIG)
     
-    print("\n✓ Componentes inicializados")
+    print("\n[OK] Componentes inicializados")
     
     # 2. GERAÇÃO DE HASH
     print("\n[PASSO 1] Gerando hash para fascículo...")
@@ -41,7 +41,7 @@ def exemplo_completo():
     if not pdf_path.exists():
         pdf_path.parent.mkdir(exist_ok=True)
         pdf_path.write_bytes(b'%PDF-1.4\n%Demo PDF\n')
-        print(f"  ✓ PDF de exemplo criado: {pdf_path}")
+        print(f"  [OK] PDF de exemplo criado: {pdf_path}")
     
     # Gera hash
     hash_info = hash_gen.generate_fasciculo_hash(
@@ -55,8 +55,8 @@ def exemplo_completo():
         }
     )
     
-    print(f"  ✓ Hash ID: {hash_info['hash_id']}")
-    print(f"  ✓ Hash: {hash_info['fasciculo_hash'][:32]}...")
+    print(f"  [OK] Hash ID: {hash_info['hash_id']}")
+    print(f"  [OK] Hash: {hash_info['fasciculo_hash'][:32]}...")
     
     # Registra na blockchain
     blockchain.add_block(
@@ -69,13 +69,13 @@ def exemplo_completo():
         },
         block_type=BlockType.HASH_GENERATED
     )
-    print("  ✓ Registrado na blockchain")
+    print("  [OK] Registrado na blockchain")
     
     # 3. CRIPTOGRAFIA
     print("\n[PASSO 2] Criptografando informações...")
     
     encrypted_info = crypto.encrypt_hash(hash_info)
-    print(f"  ✓ Dados criptografados")
+    print(f"  [OK] Dados criptografados")
     
     # Registra criptografia
     blockchain.add_block(
@@ -87,13 +87,13 @@ def exemplo_completo():
         },
         block_type=BlockType.HASH_ENCRYPTED
     )
-    print("  ✓ Criptografia registrada na blockchain")
+    print("  [OK] Criptografia registrada na blockchain")
     
     # 4. DESCRIPTOGRAFIA (quando for enviar)
     print("\n[PASSO 3] Descriptografando para envio...")
     
     decrypted_info = crypto.decrypt_hash(encrypted_info)
-    print(f"  ✓ Dados descriptografados")
+    print(f"  [OK] Dados descriptografados")
     
     # Registra descriptografia
     blockchain.add_block(
@@ -106,14 +106,14 @@ def exemplo_completo():
         },
         block_type=BlockType.HASH_DECRYPTED
     )
-    print("  ✓ Descriptografia registrada na blockchain")
+    print("  [OK] Descriptografia registrada na blockchain")
     
     # 5. ENVIO (simulado - requer configuração de email)
     print("\n[PASSO 4] Preparando envio...")
     
     # Verifica se email está configurado
     if SMTP_CONFIG['user'] and SMTP_CONFIG['password']:
-        print("  ⚠ Email configurado - envio real seria executado")
+        print("  [AVISO] Email configurado - envio real seria executado")
         print("  ℹ Para segurança, não enviando email neste exemplo")
         # Descomente para enviar de verdade:
         # result = email_sender.send_fasciculo(
@@ -136,13 +136,13 @@ def exemplo_completo():
         },
         block_type=BlockType.EMAIL_SENT
     )
-    print("  ✓ Envio registrado na blockchain")
+    print("  [OK] Envio registrado na blockchain")
     
     # 6. CONSULTA DE AUDITORIA
     print("\n[PASSO 5] Consultando trilha de auditoria...")
     
     trail = blockchain.get_audit_trail(hash_info['hash_id'])
-    print(f"  ✓ Total de eventos: {len(trail)}")
+    print(f"  [OK] Total de eventos: {len(trail)}")
     
     for i, event in enumerate(trail, 1):
         print(f"\n  Evento {i}:")
@@ -155,9 +155,9 @@ def exemplo_completo():
     
     is_valid = blockchain.verify_integrity()
     if is_valid:
-        print("  ✓ Blockchain íntegra - todos os blocos válidos")
+        print("  [OK] Blockchain íntegra - todos os blocos válidos")
     else:
-        print("  ✗ Blockchain comprometida!")
+        print("  [ERRO] Blockchain comprometida!")
     
     # 8. ESTATÍSTICAS
     print("\n[PASSO 7] Estatísticas do sistema...")
@@ -172,11 +172,11 @@ def exemplo_completo():
     print("\n" + "=" * 70)
     print("RESUMO")
     print("=" * 70)
-    print(f"\n✓ Hash ID: {hash_info['hash_id']}")
-    print(f"✓ Edição: {hash_info['edicao']}")
-    print(f"✓ Fascículo: {hash_info['fasciculo']}")
-    print(f"✓ Total de eventos registrados: {len(trail)}")
-    print(f"✓ Blockchain íntegra: {'Sim' if is_valid else 'Não'}")
+    print(f"\n[OK] Hash ID: {hash_info['hash_id']}")
+    print(f"[OK] Edição: {hash_info['edicao']}")
+    print(f"[OK] Fascículo: {hash_info['fasciculo']}")
+    print(f"[OK] Total de eventos registrados: {len(trail)}")
+    print(f"[OK] Blockchain íntegra: {'Sim' if is_valid else 'Não'}")
     
     return hash_info['hash_id']
 
@@ -213,7 +213,7 @@ def exemplo_consulta_por_edicao():
         print(f"\n  Fascículo: {info['fasciculo']}")
         print(f"  Hash ID: {hash_id}")
         print(f"  Eventos: {len(info['eventos'])}")
-        print(f"  Status: {'✓ Enviado' if BlockType.EMAIL_SENT.value in info['eventos'] else '⏳ Pendente'}")
+        print(f"  Status: {'[OK] Enviado' if BlockType.EMAIL_SENT.value in info['eventos'] else '⏳ Pendente'}")
 
 
 def exemplo_verificacao_hash():
@@ -229,7 +229,7 @@ def exemplo_verificacao_hash():
     pdf_path = Path('fasciculos/demo_fasciculo.pdf')
     
     if not pdf_path.exists():
-        print("\n⚠ PDF de exemplo não encontrado")
+        print("\n[AVISO] PDF de exemplo não encontrado")
         return
     
     # Gera hash atual
@@ -241,7 +241,7 @@ def exemplo_verificacao_hash():
     )
     
     print(f"\nHash atual do PDF: {current_hash_info['fasciculo_hash'][:32]}...")
-    print("✓ Hash gerado com sucesso")
+    print("[OK] Hash gerado com sucesso")
     print("\nEste hash pode ser comparado com o hash original para verificar integridade")
 
 
@@ -273,6 +273,6 @@ if __name__ == "__main__":
         print("\nDocumentação completa: README.md e QUICKSTART.md")
         
     except Exception as e:
-        print(f"\n✗ Erro durante execução: {e}")
+        print(f"\n[ERRO] Erro durante execução: {e}")
         import traceback
         traceback.print_exc()

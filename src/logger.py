@@ -119,5 +119,5 @@ if __name__ == "__main__":
     except Exception as e:
         logger.exception("Erro capturado com stack trace:")
     
-    print("\n✓ Sistema de logging testado com sucesso!")
+    print("\n[OK] Sistema de logging testado com sucesso!")
     print("Verifique o arquivo em: logs/auditoria_*.log")

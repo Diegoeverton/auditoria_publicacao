@@ -37,7 +37,7 @@ class CryptoManager:
             with open(self.key_path, 'wb') as key_file:
                 key_file.write(key)
             
-            print(f"✓ Nova chave de criptografia gerada em: {self.key_path}")
+            print(f"[OK] Nova chave de criptografia gerada em: {self.key_path}")
             return key
     
     def encrypt_data(self, data: Dict[str, Any]) -> str:
@@ -185,4 +185,4 @@ if __name__ == "__main__":
     decrypted = crypto.decrypt_hash(encrypted)
     print(json.dumps(decrypted, indent=2, ensure_ascii=False))
     
-    print("\n✓ Teste concluído com sucesso!")
+    print("\n[OK] Teste concluído com sucesso!")

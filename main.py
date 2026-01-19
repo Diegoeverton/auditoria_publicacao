@@ -51,7 +51,7 @@ def main():
             validar_ou_erro(Validator.validar_nome, args.edicao, "Edição")
         except ValueError as e:
             logger.error(f"Validação falhou: {e}")
-            print(f"\n✗ Erro: {e}")
+            print(f"\n[ERRO] Erro: {e}")
             return 1
         
         # Validar nome do fascículo
@@ -59,7 +59,7 @@ def main():
             validar_ou_erro(Validator.validar_nome, args.fasciculo, "Fascículo")
         except ValueError as e:
             logger.error(f"Validação falhou: {e}")
-            print(f"\n✗ Erro: {e}")
+            print(f"\n[ERRO] Erro: {e}")
             return 1
         
         # Validar PDF
@@ -67,7 +67,7 @@ def main():
         valido, erro = Validator.validar_pdf(str(pdf_path))
         if not valido:
             logger.error(f"Validação de PDF falhou: {erro}")
-            print(f"\n✗ Erro: {erro}")
+            print(f"\n[ERRO] Erro: {erro}")
             return 1
         
         # Parse metadata
@@ -75,10 +75,10 @@ def main():
             metadata = json.loads(args.metadata)
         except json.JSONDecodeError as e:
             logger.error(f"Metadados inválidos: {e}")
-            print(f"\n✗ Erro: Metadados inválidos. Use formato JSON válido")
+            print(f"\n[ERRO] Erro: Metadados inválidos. Use formato JSON válido")
             return 1
         
-        logger.info("✓ Validações concluídas")
+        logger.info("[OK] Validações concluídas")
         
         # ===== EXIBIR INFORMAÇÕES =====
         print(f"\nEdição: {args.edicao}")
@@ -98,10 +98,10 @@ def main():
             blockchain = BlockchainAudit(BLOCKCHAIN_PATH)
             db = DatabaseManager()
             
-            logger.info("✓ Componentes inicializados")
+            logger.info("[OK] Componentes inicializados")
         except Exception as e:
             logger.exception("Erro ao inicializar componentes")
-            print(f"\n✗ Erro ao inicializar componentes: {e}")
+            print(f"\n[ERRO] Erro ao inicializar componentes: {e}")
             return 1
         
         # ===== GERAR HASH =====
@@ -116,13 +116,13 @@ def main():
                 metadata=metadata
             )
             
-            print(f"  ✓ Hash ID: {hash_info['hash_id']}")
-            print(f"  ✓ Hash do Fascículo: {hash_info['fasciculo_hash'][:32]}...")
+            print(f"  [OK] Hash ID: {hash_info['hash_id']}")
+            print(f"  [OK] Hash do Fascículo: {hash_info['fasciculo_hash'][:32]}...")
             
             logger.info(f"Hash gerado - ID: {hash_info['hash_id']}, Hash: {hash_info['fasciculo_hash'][:16]}...")
         except Exception as e:
             logger.exception("Erro ao gerar hash")
-            print(f"\n✗ Erro ao gerar hash: {e}")
+            print(f"\n[ERRO] Erro ao gerar hash: {e}")
             return 1
         
         # ===== REGISTRAR NA BLOCKCHAIN =====
@@ -142,11 +142,11 @@ def main():
                 },
                 block_type=BlockType.HASH_GENERATED
             )
-            print(f"  ✓ Bloco adicionado à blockchain")
-            logger.info("✓ Bloco adicionado à blockchain")
+            print(f"  [OK] Bloco adicionado à blockchain")
+            logger.info("[OK] Bloco adicionado à blockchain")
         except Exception as e:
             logger.exception("Erro ao adicionar bloco na blockchain")
-            print(f"\n✗ Erro ao registrar na blockchain: {e}")
+            print(f"\n[ERRO] Erro ao registrar na blockchain: {e}")
             return 1
         
         # ===== SALVAR NO MYSQL =====
@@ -170,14 +170,14 @@ def main():
                 )
                 
                 db.disconnect()
-                print(f"  ✓ Dados salvos no MySQL")
-                logger.info("✓ Dados salvos no MySQL")
+                print(f"  [OK] Dados salvos no MySQL")
+                logger.info("[OK] Dados salvos no MySQL")
             else:
                 logger.warning("Não foi possível conectar ao MySQL - continuando sem banco")
-                print(f"  ⚠ Aviso: Não foi possível salvar no MySQL (continuando)")
+                print(f"  [AVISO] Aviso: Não foi possível salvar no MySQL (continuando)")
         except Exception as e:
             logger.exception("Erro ao salvar no MySQL")
-            print(f"  ⚠ Aviso: Erro ao salvar no MySQL: {e} (continuando)")
+            print(f"  [AVISO] Aviso: Erro ao salvar no MySQL: {e} (continuando)")
         
         # ===== CRIPTOGRAFAR =====
         print("[5/6] Criptografando informações sensíveis...")
@@ -185,11 +185,11 @@ def main():
         
         try:
             encrypted_info = crypto.encrypt_hash(hash_info)
-            print(f"  ✓ Dados criptografados")
-            logger.info("✓ Dados criptografados")
+            print(f"  [OK] Dados criptografados")
+            logger.info("[OK] Dados criptografados")
         except Exception as e:
             logger.exception("Erro ao criptografar")
-            print(f"\n✗ Erro ao criptografar: {e}")
+            print(f"\n[ERRO] Erro ao criptografar: {e}")
             return 1
         
         # Registrar criptografia na blockchain
@@ -204,10 +204,10 @@ def main():
                 },
                 block_type=BlockType.HASH_ENCRYPTED
             )
-            logger.info("✓ Criptografia registrada na blockchain")
+            logger.info("[OK] Criptografia registrada na blockchain")
         except Exception as e:
             logger.exception("Erro ao registrar criptografia na blockchain")
-            print(f"\n✗ Erro ao registrar criptografia: {e}")
+            print(f"\n[ERRO] Erro ao registrar criptografia: {e}")
             return 1
         
         # Registrar criptografia no MySQL
@@ -221,7 +221,7 @@ def main():
                     }
                 )
                 db.disconnect()
-                logger.info("✓ Criptografia registrada no MySQL")
+                logger.info("[OK] Criptografia registrada no MySQL")
         except Exception as e:
             logger.warning(f"Erro ao registrar criptografia no MySQL: {e}")
         
@@ -236,16 +236,16 @@ def main():
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(encrypted_info, f, indent=2, ensure_ascii=False)
             
-            print(f"  ✓ Arquivo salvo: {output_file}")
-            logger.info(f"✓ Arquivo salvo: {output_file}")
+            print(f"  [OK] Arquivo salvo: {output_file}")
+            logger.info(f"[OK] Arquivo salvo: {output_file}")
         except Exception as e:
             logger.exception("Erro ao salvar arquivo")
-            print(f"\n✗ Erro ao salvar arquivo: {e}")
+            print(f"\n[ERRO] Erro ao salvar arquivo: {e}")
             return 1
         
         # ===== SUCESSO =====
         print("\n" + "=" * 70)
-        print("✓ HASH GERADO E REGISTRADO COM SUCESSO!")
+        print("[OK] HASH GERADO E REGISTRADO COM SUCESSO!")
         print("=" * 70)
         print(f"\nHash ID: {hash_info['hash_id']}")
         print(f"Arquivo de hash: {output_file}")
@@ -264,12 +264,12 @@ def main():
     
     except KeyboardInterrupt:
         logger.warning("Operação cancelada pelo usuário")
-        print("\n\n⚠ Operação cancelada pelo usuário")
+        print("\n\n[AVISO] Operação cancelada pelo usuário")
         return 130
     
     except Exception as e:
         logger.exception("Erro inesperado")
-        print(f"\n✗ Erro inesperado: {e}")
+        print(f"\n[ERRO] Erro inesperado: {e}")
         print(f"Verifique o arquivo de log para mais detalhes: logs/auditoria_*.log")
         return 1
 

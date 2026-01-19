@@ -99,7 +99,7 @@ class BlockchainAudit:
         
         self.chain.append(genesis_block)
         self._save_blockchain()
-        print(f"✓ Blockchain criada com bloco gênesis")
+        print(f"[OK] Blockchain criada com bloco gênesis")
     
     def _load_blockchain(self):
         """Carrega blockchain do arquivo"""
@@ -121,7 +121,7 @@ class BlockchainAudit:
                 else:
                     raise ValueError(f"Hash inválido no bloco {block_data['index']}")
             
-            print(f"✓ Blockchain carregada: {len(self.chain)} blocos")
+            print(f"[OK] Blockchain carregada: {len(self.chain)} blocos")
         except Exception as e:
             print(f"Erro ao carregar blockchain: {e}")
             print("Criando nova blockchain...")
@@ -175,12 +175,12 @@ class BlockchainAudit:
             
             # Verifica se o hash do bloco atual está correto
             if current_block.hash != current_block.calculate_hash():
-                print(f"✗ Hash inválido no bloco {i}")
+                print(f"[ERRO] Hash inválido no bloco {i}")
                 return False
             
             # Verifica se o previous_hash está correto
             if current_block.previous_hash != previous_block.hash:
-                print(f"✗ Cadeia quebrada no bloco {i}")
+                print(f"[ERRO] Cadeia quebrada no bloco {i}")
                 return False
         
         return True
@@ -306,11 +306,11 @@ if __name__ == "__main__":
         block_type=BlockType.HASH_GENERATED
     )
     
-    print(f"\n✓ Bloco de teste adicionado (index: {test_block.index})")
+    print(f"\n[OK] Bloco de teste adicionado (index: {test_block.index})")
     
     # Verifica integridade
     is_valid = blockchain.verify_integrity()
-    print(f"\nIntegridade da blockchain: {'✓ VÁLIDA' if is_valid else '✗ INVÁLIDA'}")
+    print(f"\nIntegridade da blockchain: {'[OK] VÁLIDA' if is_valid else '[ERRO] INVÁLIDA'}")
     
     # Estatísticas
     stats = blockchain.get_statistics()

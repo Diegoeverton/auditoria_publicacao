@@ -36,14 +36,14 @@ def criar_banco_dados():
         
         # Cria banco se não existir
         cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
-        print(f"✓ Banco de dados '{db_name}' criado/verificado")
+        print(f"[OK] Banco de dados '{db_name}' criado/verificado")
         
         cursor.close()
         connection.close()
         return True
         
     except Error as e:
-        print(f"✗ Erro ao criar banco de dados: {e}")
+        print(f"[ERRO] Erro ao criar banco de dados: {e}")
         return False
 
 
@@ -65,17 +65,17 @@ def main():
     print(f"  Usuário: {db_user}")
     
     if not os.getenv('DB_PASSWORD'):
-        print("\n⚠ Aviso: DB_PASSWORD não está definido no .env")
+        print("\n[AVISO] DB_PASSWORD nao esta definido no .env")
         print("  Se o MySQL exigir senha, configure no arquivo .env")
     
     # Criar banco de dados
     print("\n[2/4] Criando banco de dados...")
     if not criar_banco_dados():
-        print("\n✗ Falha ao criar banco de dados")
+        print("\n[ERRO] Falha ao criar banco de dados")
         print("\nVerifique:")
-        print("  1. MySQL está instalado e rodando")
-        print("  2. Credenciais no .env estão corretas")
-        print("  3. Usuário tem permissão para criar bancos")
+        print("  1. MySQL esta instalado e rodando")
+        print("  2. Credenciais no .env estao corretas")
+        print("  3. Usuario tem permissao para criar bancos")
         return 1
     
     # Criar tabelas
@@ -83,24 +83,24 @@ def main():
     db = DatabaseManager()
     
     if not db.connect():
-        print("\n✗ Falha ao conectar ao banco")
+        print("\n[ERRO] Falha ao conectar ao banco")
         return 1
     
     if not db.create_tables():
-        print("\n✗ Falha ao criar tabelas")
+        print("\n[ERRO] Falha ao criar tabelas")
         db.disconnect()
         return 1
     
     # Verificar estrutura
     print("\n[4/4] Verificando estrutura...")
     stats = db.get_estatisticas()
-    print(f"  ✓ Tabelas criadas e funcionando")
-    print(f"  Total de registros: {stats.get('total_fasciculos', 0)} fascículos")
+    print(f"  [OK] Tabelas criadas e funcionando")
+    print(f"  Total de registros: {stats.get('total_fasciculos', 0)} fasciculos")
     
     db.disconnect()
     
     print("\n" + "=" * 70)
-    print("✓ BANCO DE DADOS INICIALIZADO COM SUCESSO!")
+    print("[OK] BANCO DE DADOS INICIALIZADO COM SUCESSO!")
     print("=" * 70)
     print("\nPróximos passos:")
     print("  1. O sistema agora salvará logs no MySQL automaticamente")

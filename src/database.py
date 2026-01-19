@@ -31,17 +31,17 @@ class DatabaseManager:
         try:
             self.connection = mysql.connector.connect(**self.config)
             if self.connection.is_connected():
-                print(f"✓ Conectado ao MySQL: {self.config['database']}")
+                print(f"[OK] Conectado ao MySQL: {self.config['database']}")
                 return True
         except Error as e:
-            print(f"✗ Erro ao conectar ao MySQL: {e}")
+            print(f"[ERRO] Erro ao conectar ao MySQL: {e}")
             return False
     
     def disconnect(self):
         """Fecha conexão com o banco de dados"""
         if self.connection and self.connection.is_connected():
             self.connection.close()
-            print("✓ Conexão com MySQL encerrada")
+            print("[OK] Conexão com MySQL encerrada")
     
     def create_tables(self):
         """Cria tabelas necessárias se não existirem"""
@@ -106,11 +106,11 @@ class DatabaseManager:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
             
-            print("✓ Tabelas criadas/verificadas com sucesso")
+            print("[OK] Tabelas criadas/verificadas com sucesso")
             return True
             
         except Error as e:
-            print(f"✗ Erro ao criar tabelas: {e}")
+            print(f"[ERRO] Erro ao criar tabelas: {e}")
             return False
         finally:
             cursor.close()
@@ -149,11 +149,11 @@ class DatabaseManager:
             )
             
             cursor.execute(query, values)
-            print(f"✓ Fascículo inserido no banco: {hash_info['hash_id']}")
+            print(f"[OK] Fascículo inserido no banco: {hash_info['hash_id']}")
             return True
             
         except Error as e:
-            print(f"✗ Erro ao inserir fascículo: {e}")
+            print(f"[ERRO] Erro ao inserir fascículo: {e}")
             return False
         finally:
             cursor.close()
@@ -202,7 +202,7 @@ class DatabaseManager:
             return True
             
         except Error as e:
-            print(f"✗ Erro ao inserir log de evento: {e}")
+            print(f"[ERRO] Erro ao inserir log de evento: {e}")
             return False
         finally:
             cursor.close()
@@ -230,7 +230,7 @@ class DatabaseManager:
             return result
             
         except Error as e:
-            print(f"✗ Erro ao buscar fascículo: {e}")
+            print(f"[ERRO] Erro ao buscar fascículo: {e}")
             return None
         finally:
             cursor.close()
@@ -268,7 +268,7 @@ class DatabaseManager:
             return results
             
         except Error as e:
-            print(f"✗ Erro ao buscar logs: {e}")
+            print(f"[ERRO] Erro ao buscar logs: {e}")
             return []
         finally:
             cursor.close()
@@ -296,7 +296,7 @@ class DatabaseManager:
             return results
             
         except Error as e:
-            print(f"✗ Erro ao buscar fascículos da edição: {e}")
+            print(f"[ERRO] Erro ao buscar fascículos da edição: {e}")
             return []
         finally:
             cursor.close()
@@ -344,7 +344,7 @@ class DatabaseManager:
             return stats
             
         except Error as e:
-            print(f"✗ Erro ao buscar estatísticas: {e}")
+            print(f"[ERRO] Erro ao buscar estatísticas: {e}")
             return {}
         finally:
             cursor.close()
@@ -364,10 +364,10 @@ if __name__ == "__main__":
     # Conectar
     print("\n[1/3] Conectando ao banco...")
     if db.connect():
-        print("  ✓ Conexão estabelecida")
+        print("  [OK] Conexão estabelecida")
     else:
-        print("  ✗ Falha na conexão")
-        print("\n⚠ Certifique-se de que:")
+        print("  [ERRO] Falha na conexão")
+        print("\n[AVISO] Certifique-se de que:")
         print("  1. MySQL está instalado e rodando")
         print("  2. Arquivo .env está configurado corretamente")
         print("  3. Banco de dados existe (ou será criado)")
@@ -376,7 +376,7 @@ if __name__ == "__main__":
     # Criar tabelas
     print("\n[2/3] Criando/verificando tabelas...")
     if db.create_tables():
-        print("  ✓ Tabelas prontas")
+        print("  [OK] Tabelas prontas")
     
     # Estatísticas
     print("\n[3/3] Buscando estatísticas...")
@@ -388,4 +388,4 @@ if __name__ == "__main__":
     # Desconectar
     db.disconnect()
     
-    print("\n✓ Teste concluído!")
+    print("\n[OK] Teste concluído!")

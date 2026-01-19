@@ -1,0 +1,7 @@
+…\audotoria_publicacao > python envio_massa.py --hash-id c0e838f8-5c9c-4a8f-9256-b01fdfca8171 --destinatarios destinatarios_teste.csv --intervalo 2 --lote 
+
+
+
+python processo_completo.py --help
+
+python processo_completo.py --edicao "Teste Final" --fasciculo "F01" --pdf "fasciculos/demo_fasciculo.pdf" --destinatarios "destinatarios_exemplo.txt" --intervalo 1 --lote 10

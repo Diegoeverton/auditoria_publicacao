@@ -203,10 +203,10 @@ class EmailSender:
             with smtplib.SMTP(self.smtp_config['server'], self.smtp_config['port']) as server:
                 server.starttls()
                 server.login(self.smtp_config['user'], self.smtp_config['password'])
-            print("✓ Conexão SMTP bem-sucedida")
+            print("[OK] Conexão SMTP bem-sucedida")
             return True
         except Exception as e:
-            print(f"✗ Erro na conexão SMTP: {e}")
+            print(f"[ERRO] Erro na conexão SMTP: {e}")
             return False
 
 
@@ -218,7 +218,7 @@ if __name__ == "__main__":
     
     # Verifica se as configurações estão definidas
     if not SMTP_CONFIG['user'] or not SMTP_CONFIG['password']:
-        print("\n⚠ Configure as credenciais SMTP no arquivo .env para testar o envio de emails")
+        print("\n[AVISO] Configure as credenciais SMTP no arquivo .env para testar o envio de emails")
         print("Exemplo de configuração necessária:")
         print("  SMTP_USER=seu_email@gmail.com")
         print("  SMTP_PASSWORD=sua_senha_ou_app_password")

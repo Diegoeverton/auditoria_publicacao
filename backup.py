@@ -32,27 +32,27 @@ def create_backup():
     if blockchain_file.exists():
         shutil.copy2(blockchain_file, backup_path / "blockchain.json")
         size_kb = blockchain_file.stat().st_size / 1024
-        print(f"✓ Blockchain copiada ({size_kb:.2f} KB)")
+        print(f"[OK] Blockchain copiada ({size_kb:.2f} KB)")
         files_backed_up += 1
     else:
-        print("⚠ Blockchain não encontrada")
+        print("[AVISO] Blockchain não encontrada")
     
     # Backup da chave de criptografia
     key_file = DATA_DIR / "keys" / "encryption.key"
     if key_file.exists():
         (backup_path / "keys").mkdir(exist_ok=True)
         shutil.copy2(key_file, backup_path / "keys" / "encryption.key")
-        print("✓ Chave de criptografia copiada (CRÍTICO!)")
+        print("[OK] Chave de criptografia copiada (CRÍTICO!)")
         files_backed_up += 1
     else:
-        print("⚠ Chave de criptografia não encontrada")
+        print("[AVISO] Chave de criptografia não encontrada")
     
     # Backup dos hashes
     hash_files = list(DATA_DIR.glob("hash_*.json"))
     if hash_files:
         for hash_file in hash_files:
             shutil.copy2(hash_file, backup_path / hash_file.name)
-        print(f"✓ {len(hash_files)} arquivo(s) de hash copiados")
+        print(f"[OK] {len(hash_files)} arquivo(s) de hash copiados")
         files_backed_up += len(hash_files)
     else:
         print("ℹ Nenhum arquivo de hash encontrado")
@@ -61,10 +61,10 @@ def create_backup():
     env_file = Path(".env")
     if env_file.exists():
         shutil.copy2(env_file, backup_path / ".env")
-        print("✓ Arquivo .env copiado")
+        print("[OK] Arquivo .env copiado")
         files_backed_up += 1
     
-    print(f"\n✓ Backup concluído com sucesso!")
+    print(f"\n[OK] Backup concluído com sucesso!")
     print(f"  Local: {backup_path}")
     print(f"  Total de arquivos: {files_backed_up}")
     
@@ -92,13 +92,13 @@ def cleanup_old_backups(days_to_keep=30):
             age_days = (time.time() - old_backup.stat().st_mtime) / 86400
             if age_days > days_to_keep:
                 shutil.rmtree(old_backup)
-                print(f"✓ Backup antigo removido: {old_backup.name} ({age_days:.0f} dias)")
+                print(f"[OK] Backup antigo removido: {old_backup.name} ({age_days:.0f} dias)")
                 removed_count += 1
     
     if removed_count == 0:
         print("ℹ Nenhum backup antigo para remover")
     else:
-        print(f"✓ {removed_count} backup(s) antigo(s) removido(s)")
+        print(f"[OK] {removed_count} backup(s) antigo(s) removido(s)")
 
 
 def list_backups():
@@ -157,12 +157,12 @@ if __name__ == "__main__":
         print("\n" + "=" * 70)
         print("BACKUP CONCLUÍDO COM SUCESSO")
         print("=" * 70)
-        print(f"\n⚠ IMPORTANTE: Guarde o backup em local seguro!")
+        print(f"\n[AVISO] IMPORTANTE: Guarde o backup em local seguro!")
         print(f"  Especialmente: {backup_path / 'keys' / 'encryption.key'}")
         print(f"\n💡 DICA: Copie o backup para um disco externo ou nuvem")
         
     except Exception as e:
-        print(f"\n✗ Erro durante backup: {e}")
+        print(f"\n[ERRO] Erro durante backup: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

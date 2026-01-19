@@ -34,7 +34,7 @@ def query_by_hash_id(blockchain: BlockchainAudit, hash_id: str):
     trail = blockchain.get_audit_trail(hash_id)
     
     if not trail:
-        print(f"\n✗ Nenhum registro encontrado para o hash_id: {hash_id}")
+        print(f"\n[ERRO] Nenhum registro encontrado para o hash_id: {hash_id}")
         return
     
     # Informações gerais
@@ -85,7 +85,7 @@ def query_by_edicao(blockchain: BlockchainAudit, edicao: str):
     blocks = blockchain.get_blocks_by_edicao(edicao)
     
     if not blocks:
-        print(f"\n✗ Nenhum registro encontrado para a edição: {edicao}")
+        print(f"\n[ERRO] Nenhum registro encontrado para a edição: {edicao}")
         return
     
     # Agrupa por hash_id
@@ -104,7 +104,7 @@ def query_by_edicao(blockchain: BlockchainAudit, edicao: str):
     # Tabela de fascículos
     table_data = []
     for hash_id, info in fasciculos.items():
-        status = '✓ Enviado' if BlockType.EMAIL_SENT.value in info['eventos'] else '⏳ Pendente'
+        status = '[OK] Enviado' if BlockType.EMAIL_SENT.value in info['eventos'] else '⏳ Pendente'
         table_data.append([
             info['fasciculo'],
             hash_id[:16] + '...',
@@ -130,10 +130,10 @@ def verify_integrity(blockchain: BlockchainAudit):
     is_valid = blockchain.verify_integrity()
     
     if is_valid:
-        print("\n✓ BLOCKCHAIN ÍNTEGRA")
+        print("\n[OK] BLOCKCHAIN ÍNTEGRA")
         print("  Todos os blocos estão válidos e a cadeia está intacta")
     else:
-        print("\n✗ BLOCKCHAIN COMPROMETIDA")
+        print("\n[ERRO] BLOCKCHAIN COMPROMETIDA")
         print("  Foram detectadas inconsistências na cadeia")
     
     return is_valid

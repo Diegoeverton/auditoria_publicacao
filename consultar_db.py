@@ -28,7 +28,7 @@ def consultar_fasciculo(db: DatabaseManager, hash_id: str):
     fasciculo = db.buscar_fasciculo(hash_id)
     
     if not fasciculo:
-        print(f"\n✗ Fascículo não encontrado: {hash_id}")
+        print(f"\n[ERRO] Fascículo não encontrado: {hash_id}")
         return
     
     # Mostrar informações
@@ -69,7 +69,7 @@ def consultar_edicao(db: DatabaseManager, edicao: str):
     fasciculos = db.buscar_fasciculos_edicao(edicao)
     
     if not fasciculos:
-        print(f"\n✗ Nenhum fascículo encontrado para a edição: {edicao}")
+        print(f"\n[ERRO] Nenhum fascículo encontrado para a edição: {edicao}")
         return
     
     print(f"\nTotal de fascículos: {len(fasciculos)}\n")
@@ -79,7 +79,7 @@ def consultar_edicao(db: DatabaseManager, edicao: str):
         # Buscar se foi enviado
         logs = db.buscar_logs_fasciculo(f['hash_id'])
         enviado = any(log['evento_tipo'] == 'EMAIL_SENT' for log in logs)
-        status = '✓ Enviado' if enviado else '⏳ Pendente'
+        status = '[OK] Enviado' if enviado else '⏳ Pendente'
         
         table_data.append([
             f['fasciculo'],
@@ -175,7 +175,7 @@ def main():
     db = DatabaseManager()
     
     if not db.connect():
-        print("\n✗ Erro ao conectar ao banco de dados")
+        print("\n[ERRO] Erro ao conectar ao banco de dados")
         print("\nVerifique:")
         print("  1. MySQL está rodando")
         print("  2. Arquivo .env está configurado")

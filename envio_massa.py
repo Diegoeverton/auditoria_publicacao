@@ -142,11 +142,11 @@ def enviar_em_massa(hash_id, arquivo_destinatarios, intervalo=1, lote_tamanho=10
         logger.info("Carregando destinatários...")
         
         destinatarios = carregar_destinatarios(arquivo_destinatarios)
-        print(f"  ✓ {len(destinatarios)} destinatário(s) válido(s)")
-        logger.info(f"✓ {len(destinatarios)} destinatários carregados")
+        print(f"  [OK] {len(destinatarios)} destinatário(s) válido(s)")
+        logger.info(f"[OK] {len(destinatarios)} destinatários carregados")
         
         if len(destinatarios) == 0:
-            print("  ✗ Nenhum destinatário válido encontrado")
+            print("  [ERRO] Nenhum destinatário válido encontrado")
             logger.error("Nenhum destinatário válido")
             return
         
@@ -154,7 +154,7 @@ def enviar_em_massa(hash_id, arquivo_destinatarios, intervalo=1, lote_tamanho=10
         hash_file = Path('data') / f"hash_{hash_id}.json"
         if not hash_file.exists():
             logger.error(f"Arquivo de hash não encontrado: {hash_file}")
-            print(f"\n✗ Erro: Arquivo de hash não encontrado: {hash_file}")
+            print(f"\n[ERRO] Erro: Arquivo de hash não encontrado: {hash_file}")
             return
         
         # Inicializa componentes
@@ -166,8 +166,8 @@ def enviar_em_massa(hash_id, arquivo_destinatarios, intervalo=1, lote_tamanho=10
         email_sender = EmailSender(SMTP_CONFIG)
         db = DatabaseManager()
         
-        print("  ✓ Componentes inicializados")
-        logger.info("✓ Componentes inicializados")
+        print("  [OK] Componentes inicializados")
+        logger.info("[OK] Componentes inicializados")
         
         # Carrega e descriptografa hash
         print("\n[3/6] Carregando informações do fascículo...")
@@ -178,25 +178,25 @@ def enviar_em_massa(hash_id, arquivo_destinatarios, intervalo=1, lote_tamanho=10
         
         decrypted_info = crypto.decrypt_hash(encrypted_info)
         
-        print(f"  ✓ Edição: {encrypted_info['edicao']}")
-        print(f"  ✓ Fascículo: {encrypted_info['fasciculo']}")
+        print(f"  [OK] Edição: {encrypted_info['edicao']}")
+        print(f"  [OK] Fascículo: {encrypted_info['fasciculo']}")
         logger.info(f"Fascículo carregado - Edição: {encrypted_info['edicao']}")
         
         # Verifica PDF
         pdf_path = Path(decrypted_info['pdf_path'])
         if not pdf_path.exists():
             logger.warning(f"PDF não encontrado: {pdf_path}")
-            print(f"\n⚠ Aviso: PDF não encontrado em {pdf_path}")
+            print(f"\n[AVISO] Aviso: PDF não encontrado em {pdf_path}")
             print(f"  O email será enviado sem anexo")
             pdf_path = None
         else:
             valido, erro = Validator.validar_pdf(str(pdf_path))
             if not valido:
                 logger.error(f"PDF inválido: {erro}")
-                print(f"\n✗ Erro: {erro}")
+                print(f"\n[ERRO] Erro: {erro}")
                 return
             pdf_size_mb = pdf_path.stat().st_size / (1024 * 1024)
-            print(f"  ✓ PDF encontrado ({pdf_size_mb:.2f} MB)")
+            print(f"  [OK] PDF encontrado ({pdf_size_mb:.2f} MB)")
         
         # Registra início no MySQL
         print("\n[4/6] Registrando início no banco de dados...")
@@ -214,11 +214,11 @@ def enviar_em_massa(hash_id, arquivo_destinatarios, intervalo=1, lote_tamanho=10
                 cursor.execute(query, (hash_id, len(destinatarios)))
                 envio_massa_id = cursor.lastrowid
                 cursor.close()
-                print(f"  ✓ Registrado no MySQL (ID: {envio_massa_id})")
-                logger.info(f"✓ Envio em massa registrado no MySQL (ID: {envio_massa_id})")
+                print(f"  [OK] Registrado no MySQL (ID: {envio_massa_id})")
+                logger.info(f"[OK] Envio em massa registrado no MySQL (ID: {envio_massa_id})")
             except Exception as e:
                 logger.warning(f"Erro ao registrar no MySQL: {e}")
-                print(f"  ⚠ Aviso: Erro ao registrar no MySQL (continuando)")
+                print(f"  [AVISO] Aviso: Erro ao registrar no MySQL (continuando)")
         
         # Registra início na blockchain
         print("[5/6] Registrando início na blockchain...")
@@ -233,8 +233,8 @@ def enviar_em_massa(hash_id, arquivo_destinatarios, intervalo=1, lote_tamanho=10
             },
             block_type=BlockType.HASH_DECRYPTED
         )
-        print("  ✓ Registrado na blockchain")
-        logger.info("✓ Início registrado na blockchain")
+        print("  [OK] Registrado na blockchain")
+        logger.info("[OK] Início registrado na blockchain")
         
         # Envio em massa
         print("\n[6/6] Enviando para destinatários...")
@@ -266,9 +266,9 @@ def enviar_em_massa(hash_id, arquivo_destinatarios, intervalo=1, lote_tamanho=10
                 )
                 
                 if result['success']:
-                    print(" ✓")
+                    print(" [OK]")
                     enviados += 1
-                    logger.info(f"✓ Email enviado para {email} ({i}/{len(destinatarios)})")
+                    logger.info(f"[OK] Email enviado para {email} ({i}/{len(destinatarios)})")
                     
                     # Registra na blockchain
                     blockchain.add_block(
@@ -299,12 +299,12 @@ def enviar_em_massa(hash_id, arquivo_destinatarios, intervalo=1, lote_tamanho=10
                             }
                         )
                 else:
-                    print(f" ✗ Erro: {result.get('error', 'Desconhecido')}")
+                    print(f" [ERRO] Erro: {result.get('error', 'Desconhecido')}")
                     erros += 1
-                    logger.error(f"✗ Erro ao enviar para {email}: {result.get('error')}")
+                    logger.error(f"[ERRO] Erro ao enviar para {email}: {result.get('error')}")
             
             except Exception as e:
-                print(f" ✗ Exceção: {e}")
+                print(f" [ERRO] Exceção: {e}")
                 erros += 1
                 logger.exception(f"Exceção ao enviar para {email}")
             
@@ -326,10 +326,10 @@ def enviar_em_massa(hash_id, arquivo_destinatarios, intervalo=1, lote_tamanho=10
         print("ENVIO EM MASSA CONCLUÍDO")
         print("=" * 70)
         
-        print(f"\n📊 Estatísticas:")
+        print(f"\n Estatísticas:")
         print(f"  Total de destinatários: {len(destinatarios)}")
-        print(f"  ✓ Enviados com sucesso: {enviados}")
-        print(f"  ✗ Erros: {erros}")
+        print(f"  [OK] Enviados com sucesso: {enviados}")
+        print(f"  [ERRO] Erros: {erros}")
         print(f"  Taxa de sucesso: {(enviados/len(destinatarios)*100):.1f}%")
         print(f"  Tempo total: {tempo_total/60:.1f} minutos")
         print(f"  Média: {tempo_total/len(destinatarios):.1f}s por email")
@@ -350,7 +350,7 @@ def enviar_em_massa(hash_id, arquivo_destinatarios, intervalo=1, lote_tamanho=10
                 """
                 cursor.execute(query, (enviados, erros, tempo_total / 60, envio_massa_id))
                 cursor.close()
-                logger.info("✓ Estatísticas atualizadas no MySQL")
+                logger.info("[OK] Estatísticas atualizadas no MySQL")
             except Exception as e:
                 logger.warning(f"Erro ao atualizar MySQL: {e}")
         
@@ -373,14 +373,14 @@ def enviar_em_massa(hash_id, arquivo_destinatarios, intervalo=1, lote_tamanho=10
             block_type=BlockType.VERIFICATION
         )
         
-        print(f"\n✓ Envio em massa registrado na blockchain e MySQL")
+        print(f"\n[OK] Envio em massa registrado na blockchain e MySQL")
         print(f"\nPara consultar a auditoria:")
         print(f"  python audit_query.py --hash-id {hash_id}")
         print(f"  python consultar_db.py --hash-id {hash_id}")
     
     except Exception as e:
         logger.exception("Erro durante envio em massa")
-        print(f"\n✗ Erro: {e}")
+        print(f"\n[ERRO] Erro: {e}")
         print(f"Verifique o arquivo de log: logs/auditoria_*.log")
 
 
@@ -403,7 +403,7 @@ def main():
     # Verifica configuração de email
     if not SMTP_CONFIG['user'] or not SMTP_CONFIG['password']:
         logger.error("Configurações de email não definidas")
-        print("\n✗ Erro: Configurações de email não definidas")
+        print("\n[ERRO] Erro: Configurações de email não definidas")
         print("  Configure as credenciais SMTP no arquivo .env")
         print("\nVeja o guia: CONFIGURAR_GMAIL.md")
         return 1

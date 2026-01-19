@@ -258,7 +258,7 @@ if __name__ == "__main__":
     
     for email in emails_teste:
         valido, erro = Validator.validar_email(email)
-        status = "✓" if valido else "✗"
+        status = "[OK]" if valido else "[ERRO]"
         print(f"  {status} {email:30s} - {erro or 'Válido'}")
     
     # Teste de PDF
@@ -271,7 +271,7 @@ if __name__ == "__main__":
     
     for pdf in pdfs_teste:
         valido, erro = Validator.validar_pdf(pdf)
-        status = "✓" if valido else "✗"
+        status = "[OK]" if valido else "[ERRO]"
         print(f"  {status} {pdf:30s} - {erro or 'Válido'}")
     
     # Teste de nome
@@ -285,7 +285,7 @@ if __name__ == "__main__":
     
     for nome in nomes_teste:
         valido, erro = Validator.validar_nome(nome, "Edição")
-        status = "✓" if valido else "✗"
+        status = "[OK]" if valido else "[ERRO]"
         print(f"  {status} {nome:30s} - {erro or 'Válido'}")
     
-    print("\n✓ Testes de validação concluídos!")
+    print("\n[OK] Testes de validação concluídos!")
