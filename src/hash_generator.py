@@ -117,6 +117,35 @@ class HashGenerator:
         """
         current_content_hash = self._read_pdf_content(pdf_path)
         return current_content_hash in original_hash
+    
+    def gerar_hash_envio(self, hash_fasciculo: str, destinatario_email: str, timestamp: str = None) -> dict:
+        """
+        Gera hash único para um envio individual (fascículo + destinatário)
+        
+        Args:
+            hash_fasciculo: Hash do fascículo original
+            destinatario_email: Email do destinatário
+            timestamp: Timestamp do envio (opcional, usa atual se não fornecido)
+        
+        Returns:
+            Dict com hash_envio e hash_verificacao
+        """
+        if timestamp is None:
+            timestamp = datetime.utcnow().isoformat()
+        
+        # Gerar hash de envio único (UUID com prefixo)
+        hash_envio = f"env-{str(uuid.uuid4())}"
+        
+        # Gerar hash de verificação (SHA-256 de: hash_fasciculo + email + timestamp)
+        dados_verificacao = f"{hash_fasciculo}|{destinatario_email}|{timestamp}"
+        hash_verificacao = hashlib.sha256(dados_verificacao.encode()).hexdigest()
+        
+        return {
+            'hash_envio': hash_envio,
+            'hash_verificacao': hash_verificacao,
+            'timestamp': timestamp
+        }
+
 
 
 if __name__ == "__main__":

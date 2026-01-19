@@ -8,23 +8,26 @@ import subprocess
 from pathlib import Path
 import re
 import time
+import os
+
+# Detectar Python correto (venv ou sistema)
+PYTHON_CMD = 'python'
 
 def extrair_hash_id(output):
     """Extrai hash ID da saída do main.py"""
     match = re.search(r'Hash ID: ([a-f0-9-]+)', output)
     return match.group(1) if match else None
 
-def executar_comando(comando, descricao):
+def executar_comando(comando_lista, descricao):
     """Executa um comando e retorna a saída"""
     print(f"\n{'='*70}")
     print(f"{descricao}")
     print(f"{'='*70}")
     
     result = subprocess.run(
-        comando,
+        comando_lista,
         capture_output=True,
-        text=True,
-        shell=True
+        text=True
     )
     
     print(result.stdout)
@@ -93,7 +96,7 @@ Exemplos de uso:
             return 1
         
         script = 'consultar_db.py' if args.consultar_mysql else 'audit_query.py'
-        comando = f'python {script} --hash-id {hash_id}'
+        comando = [PYTHON_CMD, script, '--hash-id', hash_id]
         
         result = executar_comando(comando, f"CONSULTANDO AUDITORIA ({script})")
         return result.returncode
@@ -107,7 +110,7 @@ Exemplos de uso:
             print("   OU forneca --hash-id se o hash ja foi gerado")
             return 1
         
-        comando = f'python main.py --edicao "{args.edicao}" --fasciculo "{args.fasciculo}" --pdf "{args.pdf}"'
+        comando = [PYTHON_CMD, 'main.py', '--edicao', args.edicao, '--fasciculo', args.fasciculo, '--pdf', args.pdf]
         
         result = executar_comando(comando, "ETAPA 1/3: GERANDO HASH DO FASCICULO")
         
@@ -127,7 +130,7 @@ Exemplos de uso:
     
     # ETAPA 2: Enviar em Massa (se não for skip)
     if not args.skip_envio and args.destinatarios:
-        comando = f'python envio_massa.py --hash-id {hash_id} --destinatarios "{args.destinatarios}" --intervalo {args.intervalo} --lote {args.lote}'
+        comando = [PYTHON_CMD, 'envio_massa.py', '--hash-id', hash_id, '--destinatarios', args.destinatarios, '--intervalo', str(args.intervalo), '--lote', str(args.lote)]
         
         result = executar_comando(comando, "ETAPA 2/3: ENVIANDO EM MASSA")
         
@@ -143,7 +146,7 @@ Exemplos de uso:
     # ETAPA 3: Consultar Auditoria (se não for skip)
     if not args.skip_consulta:
         script = 'consultar_db.py' if args.consultar_mysql else 'audit_query.py'
-        comando = f'python {script} --hash-id {hash_id}'
+        comando = [PYTHON_CMD, script, '--hash-id', hash_id]
         
         result = executar_comando(comando, f"ETAPA 3/3: CONSULTANDO AUDITORIA ({script})")
     

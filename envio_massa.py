@@ -21,6 +21,7 @@ from crypto_manager import CryptoManager
 from email_sender import EmailSender
 from blockchain_audit import BlockchainAudit, BlockType
 from database import DatabaseManager
+from hash_generator import HashGenerator
 from logger import get_logger
 from validator import Validator, validar_ou_erro
 from config import ENCRYPTION_KEY_PATH, BLOCKCHAIN_PATH, SMTP_CONFIG
@@ -256,6 +257,24 @@ def enviar_em_massa(hash_id, arquivo_destinatarios, intervalo=1, lote_tamanho=10
                 print(f" ({nome})", end='')
             print("...", end='', flush=True)
             
+            # ===== GERAR HASH INDIVIDUAL DE ENVIO =====
+            hash_gen = HashGenerator()
+            hash_envio_data = hash_gen.gerar_hash_envio(
+                hash_fasciculo=hash_id,
+                destinatario_email=email
+            )
+            
+            # Registrar envio individual no banco ANTES de enviar
+            envio_individual_id = None
+            if db.connection and db.connection.is_connected():
+                envio_individual_id = db.inserir_envio_individual(
+                    hash_fasciculo=hash_id,
+                    hash_envio=hash_envio_data['hash_envio'],
+                    destinatario_email=email,
+                    destinatario_nome=nome,
+                    hash_verificacao=hash_envio_data['hash_verificacao']
+                )
+            
             try:
                 result = enviar_email_com_retry(
                     email_sender=email_sender,
@@ -266,14 +285,19 @@ def enviar_em_massa(hash_id, arquivo_destinatarios, intervalo=1, lote_tamanho=10
                 )
                 
                 if result['success']:
-                    print(" [OK]")
+                    print(f" [OK] Hash: {hash_envio_data['hash_envio'][:16]}...")
                     enviados += 1
-                    logger.info(f"[OK] Email enviado para {email} ({i}/{len(destinatarios)})")
+                    logger.info(f"[OK] Email enviado para {email} ({i}/{len(destinatarios)}) - Hash: {hash_envio_data['hash_envio']}")
+                    
+                    # Atualizar status do envio individual para ENVIADO
+                    if envio_individual_id and db.connection and db.connection.is_connected():
+                        db.atualizar_status_envio(envio_individual_id, 'ENVIADO')
                     
                     # Registra na blockchain
                     blockchain.add_block(
                         data={
                             'hash_id': hash_id,
+                            'hash_envio': hash_envio_data['hash_envio'],
                             'edicao': encrypted_info['edicao'],
                             'fasciculo': encrypted_info['fasciculo'],
                             'destinatario': email,
@@ -285,7 +309,7 @@ def enviar_em_massa(hash_id, arquivo_destinatarios, intervalo=1, lote_tamanho=10
                         block_type=BlockType.EMAIL_SENT
                     )
                     
-                    # Registra no MySQL
+                    # Registra no MySQL (logs_eventos)
                     if db.connection and db.connection.is_connected():
                         db.inserir_log_evento(
                             hash_id=hash_id,
@@ -295,18 +319,39 @@ def enviar_em_massa(hash_id, arquivo_destinatarios, intervalo=1, lote_tamanho=10
                             dados_adicionais={
                                 'numero_envio': i,
                                 'total_envios': len(destinatarios),
-                                'envio_massa_id': envio_massa_id
+                                'envio_massa_id': envio_massa_id,
+                                'hash_envio': hash_envio_data['hash_envio'],
+                                'hash_verificacao': hash_envio_data['hash_verificacao']
                             }
                         )
                 else:
                     print(f" [ERRO] Erro: {result.get('error', 'Desconhecido')}")
                     erros += 1
                     logger.error(f"[ERRO] Erro ao enviar para {email}: {result.get('error')}")
+                    
+                    # Atualizar status do envio individual para ERRO
+                    if envio_individual_id and db.connection and db.connection.is_connected():
+                        db.atualizar_status_envio(envio_individual_id, 'ERRO', data_envio=False)
             
             except Exception as e:
                 print(f" [ERRO] Exceção: {e}")
                 erros += 1
                 logger.exception(f"Exceção ao enviar para {email}")
+                
+                # Atualizar status do envio individual para ERRO
+                if envio_individual_id and db.connection and db.connection.is_connected():
+                    db.atualizar_status_envio(envio_individual_id, 'ERRO', data_envio=False)
+            
+            # Intervalo entre envios
+            if i < len(destinatarios):
+                if i % lote_tamanho == 0:
+                    pausa = intervalo * 5
+                    print(f"\n⏸ Pausa de {pausa}s após {lote_tamanho} envios...")
+                    logger.info(f"Pausa de {pausa}s após lote de {lote_tamanho}")
+                    time.sleep(pausa)
+                else:
+                    time.sleep(intervalo)
+
             
             # Intervalo entre envios
             if i < len(destinatarios):

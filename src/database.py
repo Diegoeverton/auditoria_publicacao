@@ -346,6 +346,160 @@ class DatabaseManager:
         except Error as e:
             print(f"[ERRO] Erro ao buscar estatísticas: {e}")
             return {}
+    
+    def inserir_envio_individual(self, hash_fasciculo: str, hash_envio: str, 
+                                 destinatario_email: str, destinatario_nome: str,
+                                 hash_verificacao: str) -> Optional[int]:
+        """
+        Insere registro de envio individual
+        
+        Args:
+            hash_fasciculo: Hash do fascículo original
+            hash_envio: Hash único deste envio
+            destinatario_email: Email do destinatário
+            destinatario_nome: Nome do destinatário
+            hash_verificacao: Hash de verificação SHA-256
+        
+        Returns:
+            ID do registro inserido ou None em caso de erro
+        """
+        if not self.connection or not self.connection.is_connected():
+            return None
+        
+        try:
+            cursor = self.connection.cursor()
+            
+            query = """
+                INSERT INTO envios_individuais 
+                (hash_fasciculo, hash_envio, destinatario_email, destinatario_nome, 
+                 hash_verificacao, status)
+                VALUES (%s, %s, %s, %s, %s, 'PENDENTE')
+            """
+            
+            cursor.execute(query, (
+                hash_fasciculo,
+                hash_envio,
+                destinatario_email,
+                destinatario_nome,
+                hash_verificacao
+            ))
+            
+            envio_id = cursor.lastrowid
+            self.connection.commit()
+            cursor.close()
+            
+            return envio_id
+            
+        except Error as e:
+            print(f"[ERRO] Erro ao inserir envio individual: {e}")
+            return None
+    
+    def atualizar_status_envio(self, envio_id: int, status: str, data_envio: bool = True) -> bool:
+        """
+        Atualiza status de um envio individual
+        
+        Args:
+            envio_id: ID do envio
+            status: Novo status (ENVIADO, ERRO, CONFIRMADO)
+            data_envio: Se True, atualiza data_envio para agora
+        
+        Returns:
+            True se atualizado com sucesso
+        """
+        if not self.connection or not self.connection.is_connected():
+            return False
+        
+        try:
+            cursor = self.connection.cursor()
+            
+            if data_envio:
+                query = """
+                    UPDATE envios_individuais 
+                    SET status = %s, data_envio = NOW()
+                    WHERE id = %s
+                """
+            else:
+                query = """
+                    UPDATE envios_individuais 
+                    SET status = %s
+                    WHERE id = %s
+                """
+            
+            cursor.execute(query, (status, envio_id))
+            self.connection.commit()
+            cursor.close()
+            
+            return True
+            
+        except Error as e:
+            print(f"[ERRO] Erro ao atualizar status: {e}")
+            return False
+    
+    def buscar_envio_por_hash(self, hash_envio: str) -> Optional[Dict]:
+        """
+        Busca envio individual pelo hash de envio
+        
+        Args:
+            hash_envio: Hash único do envio
+        
+        Returns:
+            Dicionário com informações do envio ou None
+        """
+        if not self.connection or not self.connection.is_connected():
+            return None
+        
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            
+            query = """
+                SELECT ei.*, f.edicao, f.fasciculo
+                FROM envios_individuais ei
+                JOIN fasciculos f ON ei.hash_fasciculo = f.hash_id
+                WHERE ei.hash_envio = %s
+            """
+            
+            cursor.execute(query, (hash_envio,))
+            result = cursor.fetchone()
+            cursor.close()
+            
+            return result
+            
+        except Error as e:
+            print(f"[ERRO] Erro ao buscar envio: {e}")
+            return None
+    
+    def buscar_envios_fasciculo(self, hash_fasciculo: str) -> List[Dict]:
+        """
+        Busca todos os envios de um fascículo
+        
+        Args:
+            hash_fasciculo: Hash do fascículo
+        
+        Returns:
+            Lista de dicionários com envios
+        """
+        if not self.connection or not self.connection.is_connected():
+            return []
+        
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            
+            query = """
+                SELECT * FROM envios_individuais
+                WHERE hash_fasciculo = %s
+                ORDER BY created_at
+            """
+            
+            cursor.execute(query, (hash_fasciculo,))
+            results = cursor.fetchall()
+            cursor.close()
+            
+            return results
+            
+        except Error as e:
+            print(f"[ERRO] Erro ao buscar envios: {e}")
+            return []
+
         finally:
             cursor.close()
 

@@ -5,3 +5,6 @@
 python processo_completo.py --help
 
 python processo_completo.py --edicao "Teste Final" --fasciculo "F01" --pdf "fasciculos/demo_fasciculo.pdf" --destinatarios "destinatarios_exemplo.txt" --intervalo 1 --lote 10
+
+
+python processo_completo.py --edicao "Teste Final" --fasciculo "Fasciculo 01" --pdf "fasciculos/demo_fasciculo.pdf" --destinatarios "destinatarios_exemplo.txt"
